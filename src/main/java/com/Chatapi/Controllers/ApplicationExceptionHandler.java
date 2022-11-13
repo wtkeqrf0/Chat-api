@@ -19,7 +19,7 @@ public class ApplicationExceptionHandler {
             MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();
         ex.getBindingResult().getAllErrors().forEach(error ->
-            errors.put(((FieldError) error).getField(), error.getDefaultMessage()));
+                errors.put(((FieldError) error).getField(), error.getDefaultMessage()));
         return errors;
     }
 }

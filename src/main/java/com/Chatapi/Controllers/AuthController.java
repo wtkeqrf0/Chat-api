@@ -59,7 +59,7 @@ public class AuthController {
     @PostMapping("/reg")
     public ResponseEntity<?> register(@RequestBody @Valid AuthenticationRequestDTO request,
                                       @RequestBody(required = false) Boolean isClient) {
-        if (isClient==null) isClient=true;
+        if (isClient == null) isClient = true;
         try {
             userService.findUser(request.getLogin());
             return new ResponseEntity<>("This login already exists", HttpStatus.UNAUTHORIZED);

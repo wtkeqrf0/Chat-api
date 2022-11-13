@@ -11,5 +11,4 @@ public class WidgetModel {
     private UUID messageId;
     @NotNull
     private String data;
-
 }

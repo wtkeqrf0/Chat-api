@@ -1,6 +1,7 @@
 package com.Chatapi.Controllers;
 
 import com.Chatapi.Entities.Dialog;
+import com.Chatapi.Entities.User;
 import com.Chatapi.securities.JwtTokenProvider;
 import com.Chatapi.servises.DialogService;
 import com.Chatapi.servises.UserService;
@@ -11,7 +12,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
 import java.util.HashMap;
 
 @RestController
@@ -24,12 +24,16 @@ public class ChatController {
     private final JwtTokenProvider jwtTokenProvider;
 
     @GetMapping("/dialog")
-    public ResponseEntity<?> getDialogId(@RequestHeader("Authorization") String token) {
+    public ResponseEntity<?> getDialogId(@RequestHeader("Authorization") String token,
+                                         @RequestParam(required = false) Long recipientId) {
         UserDetails userDetails = (UserDetails) jwtTokenProvider.getAuthentication(token).getPrincipal();
+        User user = userService.findUser(userDetails.getUsername());
 
         HashMap<Object, Object> response = new HashMap<>();
-        response.put("dialogId", userService.findUser(userDetails.getUsername()).getDialogId());
+        if (recipientId != null) response.put("dialogId", dialogService.uniqueDialog(
+                user.getUserId(), recipientId));
 
+        else response.put("dialogIds", dialogService.getUserDialogs(user.getUserId()));
         return ResponseEntity.ok(response);
     }
 
@@ -54,11 +58,10 @@ public class ChatController {
 
     @GetMapping("/history")
     public ResponseEntity<?> getHistory(@RequestParam Long dialogId,
-                                        @RequestParam(required = false) @Valid Integer limit,
+                                        @RequestParam(required = false) Integer limit,
                                         @RequestParam(required = false) Long timestamp,
-                                        @RequestParam(required = false) Boolean older)
-            {
-        if (limit == null || limit>50 || limit<1) limit = 20;
+                                        @RequestParam(required = false) Boolean older) {
+        if (limit == null || limit > 50 || limit < 1) limit = 20;
         Dialog dialog;
         try {
             dialog = dialogService.findDialog(dialogId);

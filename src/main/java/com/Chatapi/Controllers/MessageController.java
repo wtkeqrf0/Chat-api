@@ -7,6 +7,7 @@ import com.Chatapi.models.MessageModel;
 import com.Chatapi.models.WidgetModel;
 import com.Chatapi.servises.DialogService;
 import com.Chatapi.servises.MessageService;
+import org.springframework.core.io.FileUrlResource;
 import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -40,7 +41,7 @@ public class MessageController {
             return new ResponseEntity<>("Dialog with id " +
                     messageModel.getDialogId() + " does not exist", HttpStatus.NOT_FOUND);
         }
-        message.setDialogId(dialog);
+        message.setDialog(dialog);
         message.setText(messageModel.getText());
         message.setMessageType(messageModel.getMessageType());
 
@@ -50,19 +51,21 @@ public class MessageController {
         HashMap<Object, Object> response = new HashMap<>();
 
         if (messageModel.getMessageType() == MessageType.MEDIA) {
-            String path = Path.of("src\\files").toAbsolutePath() + "\\" +
-                    UUID.randomUUID() + "-" + messageModel.getFileName();
+            String fileName = UUID.randomUUID() + "-" + messageModel.getFileName().split("\\.")[0];
 
             try {
-                Files.write(Path.of(path),
-                        messageModel.getMediaByte(),
-                        StandardOpenOption.CREATE);
+                Path p = Files.createTempFile(fileName, "." + messageModel.getFileName().split("\\.")[1]);
+                Files.write(p, messageModel.getMediaByte(),
+                        StandardOpenOption.WRITE, StandardOpenOption.CREATE);
+
+                FileUrlResource fileUrlResource = new FileUrlResource(p.toString());
+
+                message.setMediaUrl(p + "\\" + fileName);
+                response.put("mediaUrl", p);
 
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            message.setMediaUrl(path);
-            response.put("mediaUrl", path);
         }
         response.put("messageId", messageService.saveMessage(message).getMessageId());
 
@@ -72,12 +75,11 @@ public class MessageController {
     @PostMapping("chat/message/update")
     public ResponseEntity<?> updateWidget(@RequestBody @Valid WidgetModel widgetModel) {
         try {
-            messageService.findMessage(widgetModel.getMessageId());
-
+            if (messageService.findMessage(widgetModel.getMessageId()).getMessageType() != MessageType.WIDGET)
+                return new ResponseEntity<>("This is not a WIDGET message", HttpStatus.FORBIDDEN);
         } catch (ChangeSetPersister.NotFoundException e) {
             return new ResponseEntity<>("This message id does not exist", HttpStatus.NOT_FOUND);
         }
-
         messageService.updateData(widgetModel.getData(), widgetModel.getMessageId());
 
         return new ResponseEntity<>(HttpStatus.OK);

@@ -4,6 +4,7 @@ import com.Chatapi.Entities.User;
 import com.Chatapi.models.UserModel;
 import com.Chatapi.securities.JwtTokenProvider;
 import com.Chatapi.servises.UserService;
+import org.springframework.core.io.FileUrlResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -12,7 +13,11 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/user")
@@ -39,7 +44,7 @@ public class UsersController {
 
         HashMap<Object, Object> response = new HashMap<>();
         response.put("userId", user.getUserId().toString());
-        response.put("avatar", user.getAvatar());
+        response.put("avatar", user.getAvatarUrl());
         response.put("surname", user.getSurname());
         response.put("name", user.getName());
         response.put("middleName", user.getMiddleName());
@@ -51,9 +56,30 @@ public class UsersController {
     public ResponseEntity<?> updateUserInfo(@RequestHeader("Authorization") String token,
                                             @RequestBody @Valid UserModel user) {
         UserDetails userDetails = (UserDetails) jwtTokenProvider.getAuthentication(token).getPrincipal();
+        String avatarUrl = null;
+
+        if (user.getAvatar().length!=0) {
+            String fileName = UUID.randomUUID().toString();
+
+            try {
+                Path p = Files.createTempFile(fileName, ".jpg");
+                Files.write(p, user.getAvatar(),
+                        StandardOpenOption.WRITE, StandardOpenOption.CREATE);
+
+                FileUrlResource fileUrlResource = new FileUrlResource(p.toString());
+                System.out.println(fileUrlResource.getFile());
+
+                avatarUrl = p + "\\" + fileName;
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
 
         userService.updateUser(user.getName(), user.getMiddleName(),
-                user.getSurname(), user.getAvatar(), userDetails.getUsername());
+                user.getSurname(), avatarUrl == null ?
+                        userService.findUser(userDetails.getUsername()).getAvatarUrl() :
+                        avatarUrl, userDetails.getUsername());
         return new ResponseEntity<>(HttpStatus.OK);
     }
 

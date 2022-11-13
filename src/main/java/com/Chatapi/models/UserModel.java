@@ -12,5 +12,5 @@ public class UserModel {
     private String name;
     @NotNull
     private String middleName;
-    private String avatar;
+    private byte[] avatar;
 }

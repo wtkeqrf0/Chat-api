@@ -40,7 +40,7 @@ public class Message {
     @JsonBackReference
     @ManyToOne
     @JoinColumn(name = "dialog_id")
-    private Dialog dialogId;
+    private Dialog dialog;
 
     @Column(updatable = false)
     @CreationTimestamp

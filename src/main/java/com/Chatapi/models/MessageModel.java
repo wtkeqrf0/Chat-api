@@ -3,6 +3,7 @@ package com.Chatapi.models;
 import com.Chatapi.Enums.MessageType;
 import lombok.Getter;
 
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
 @Getter
@@ -11,6 +12,7 @@ public class MessageModel {
     private Long dialogId;
 
     @NotNull
+    @NotBlank
     private String text;
 
     @NotNull

@@ -5,6 +5,8 @@ import com.Chatapi.repos.DialogRepo;
 import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.stereotype.Service;
 
+import java.util.Set;
+
 @Service
 public class DialogService {
 
@@ -15,9 +17,17 @@ public class DialogService {
     }
 
     public Dialog saveDialog(Dialog dialog) {
-        if (repo.uniqueDialog(dialog.getSenderId(), dialog.getRecipientId()).orElse(null)==null)
+        if (repo.uniqueDialog(dialog.getSenderId(), dialog.getRecipientId()).orElse(null) == null)
             return repo.save(dialog);
         return null;
+    }
+
+    public Dialog uniqueDialog(Long senderId, Long recipientId) {
+        return repo.uniqueDialog(senderId, recipientId).orElse(null);
+    }
+
+    public Set<Dialog> getUserDialogs(Long senderId) {
+        return repo.getUserDialogs(senderId);
     }
 
     public DialogService(DialogRepo repo) {
